@@ -52,6 +52,23 @@
               </svg>
             </button>
           </div>
+          <button class="export-btn" @click="exportCSV">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 2v8M4 7l4 4 4-4" />
+              <path d="M2 12v2h12v-2" />
+            </svg>
+            Export CSV
+          </button>
         </div>
         <div class="table-container">
           <table>
@@ -237,6 +254,60 @@ export default {
       showItemModal.value = true;
     };
 
+    const escapeCsvValue = (value) => {
+      const str = String(value);
+      if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+        return '"' + str.replace(/"/g, '""') + '"';
+      }
+      return str;
+    };
+
+    const exportCSV = () => {
+      const statusLabel = (item) => {
+        const key = getStockStatusKey(item);
+        if (key === "lowStock") return "Low Stock";
+        if (key === "adequate") return "Adequate";
+        return "In Stock";
+      };
+
+      const headers = [
+        "SKU",
+        "Item Name",
+        "Category",
+        "Quantity on Hand",
+        "Reorder Point",
+        "Unit Cost",
+        "Total Value",
+        "Location",
+        "Status",
+      ];
+
+      const rows = filteredItems.value.map((item) => [
+        escapeCsvValue(item.sku),
+        escapeCsvValue(item.name),
+        escapeCsvValue(item.category),
+        item.quantity_on_hand,
+        item.reorder_point,
+        item.unit_cost.toFixed(2),
+        (item.quantity_on_hand * item.unit_cost).toFixed(2),
+        escapeCsvValue(item.location),
+        statusLabel(item),
+      ]);
+
+      const csvContent =
+        headers.join(",") + "\n" + rows.map((row) => row.join(",")).join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "inventory-export.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
     onMounted(loadInventory);
 
     return {
@@ -255,6 +326,7 @@ export default {
       currencySymbol,
       translateProductName,
       translateWarehouse,
+      exportCSV,
     };
   },
 };
@@ -351,6 +423,31 @@ export default {
 .clear-search svg {
   width: 18px;
   height: 18px;
+}
+
+.export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.export-btn:hover {
+  background: #2563eb;
+}
+
+.export-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .loading,
