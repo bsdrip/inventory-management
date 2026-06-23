@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
@@ -119,6 +120,24 @@ class CreatePurchaseOrderRequest(BaseModel):
     unit_cost: float
     expected_delivery_date: str
     notes: Optional[str] = None
+
+class RestockingRecommendation(BaseModel):
+    item_sku: str
+    item_name: str
+    forecasted_demand: int
+    quantity_on_hand: int
+    shortage: int
+    trend: str
+    unit_cost: float
+    recommended_quantity: int
+    estimated_cost: float
+    priority_score: float
+    warehouse: str
+    category: str
+
+class RestockingOrderRequest(BaseModel):
+    items: List[dict]
+    budget: float
 
 # API endpoints
 @app.get("/")
@@ -303,6 +322,85 @@ def get_monthly_trends():
     result = list(months.values())
     result.sort(key=lambda x: x['month'])
     return result
+
+TREND_MULTIPLIER = {"increasing": 2.0, "stable": 1.0, "decreasing": 0.5}
+
+@app.get("/api/restocking/recommendations", response_model=List[RestockingRecommendation])
+def get_restocking_recommendations(
+    warehouse: Optional[str] = None,
+    category: Optional[str] = None
+):
+    """Get restocking recommendations by joining demand forecasts with inventory."""
+    inventory_lookup = {}
+    for item in inventory_items:
+        inventory_lookup[item["sku"]] = item
+
+    filtered_inventory = apply_filters(inventory_items, warehouse, category)
+    allowed_skus = {item["sku"] for item in filtered_inventory}
+
+    recommendations = []
+    for forecast in demand_forecasts:
+        sku = forecast["item_sku"]
+        inv = inventory_lookup.get(sku)
+        if not inv or sku not in allowed_skus:
+            continue
+
+        shortage = forecast["forecasted_demand"] - inv["quantity_on_hand"]
+        if shortage <= 0:
+            continue
+
+        multiplier = TREND_MULTIPLIER.get(forecast["trend"], 1.0)
+        priority_score = shortage * multiplier
+
+        recommendations.append({
+            "item_sku": sku,
+            "item_name": forecast["item_name"],
+            "forecasted_demand": forecast["forecasted_demand"],
+            "quantity_on_hand": inv["quantity_on_hand"],
+            "shortage": shortage,
+            "trend": forecast["trend"],
+            "unit_cost": inv["unit_cost"],
+            "recommended_quantity": shortage,
+            "estimated_cost": round(shortage * inv["unit_cost"], 2),
+            "priority_score": priority_score,
+            "warehouse": inv["warehouse"],
+            "category": inv["category"],
+        })
+
+    recommendations.sort(key=lambda r: r["priority_score"], reverse=True)
+    return recommendations
+
+@app.post("/api/restocking/orders", response_model=Order)
+def submit_restocking_order(request: RestockingOrderRequest):
+    """Submit a restocking order. Appends to in-memory orders list."""
+    max_id = max((int(o["id"]) for o in orders), default=0)
+    new_id = str(max_id + 1)
+    new_number = f"ORD-2025-{int(new_id):04d}"
+
+    now = datetime.now()
+    total_value = round(sum(item["quantity"] * item["unit_cost"] for item in request.items), 2)
+
+    order_items = [
+        {"sku": item["sku"], "name": item["name"], "quantity": item["quantity"], "unit_price": item["unit_cost"]}
+        for item in request.items
+    ]
+
+    new_order = {
+        "id": new_id,
+        "order_number": new_number,
+        "customer": "Internal Restocking",
+        "items": order_items,
+        "status": "Submitted",
+        "warehouse": request.items[0]["warehouse"] if request.items and "warehouse" in request.items[0] else None,
+        "category": request.items[0]["category"] if request.items and "category" in request.items[0] else None,
+        "order_date": now.isoformat(),
+        "expected_delivery": (now + timedelta(days=7)).isoformat(),
+        "total_value": total_value,
+        "actual_delivery": None,
+    }
+
+    orders.append(new_order)
+    return new_order
 
 if __name__ == "__main__":
     import uvicorn
