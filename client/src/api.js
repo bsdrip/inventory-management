@@ -144,4 +144,33 @@ export const api = {
     );
     return response.data;
   },
+
+  async getInventoryReport(
+    warehouse,
+    category,
+    startDate,
+    endDate,
+    includeZeroStock,
+  ) {
+    const params = new URLSearchParams();
+    if (warehouse && warehouse !== "all") {
+      params.append("warehouse", warehouse);
+    }
+    if (category && category !== "all") {
+      params.append("category", category);
+    }
+    if (startDate) {
+      params.append("start_date", startDate);
+    }
+    if (endDate) {
+      params.append("end_date", endDate);
+    }
+    if (includeZeroStock === true) {
+      params.append("include_zero_stock", "true");
+    }
+    const response = await axios.get(
+      `${API_BASE_URL}/inventory/report?${params.toString()}`,
+    );
+    return response.data;
+  },
 };
