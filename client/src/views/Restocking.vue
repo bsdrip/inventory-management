@@ -1,22 +1,22 @@
 <template>
   <div class="restocking">
     <div class="page-header">
-      <h2>{{ t('restocking.title') }}</h2>
-      <p>{{ t('restocking.description') }}</p>
+      <h2>{{ t("restocking.title") }}</h2>
+      <p>{{ t("restocking.description") }}</p>
     </div>
 
-    <div v-if="loading" class="loading">{{ t('common.loading') }}</div>
+    <div v-if="loading" class="loading">{{ t("common.loading") }}</div>
     <div v-else-if="error" class="error">{{ error }}</div>
     <div v-else>
       <!-- Success notification -->
       <div v-if="orderSuccess" class="success-banner">
-        {{ t('restocking.orderPlaced') }}
+        {{ t("restocking.orderPlaced") }}
       </div>
 
       <!-- Budget slider card -->
       <div class="card budget-card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('restocking.budget') }}</h3>
+          <h3 class="card-title">{{ t("restocking.budget") }}</h3>
           <div class="budget-display">{{ formatMoney(budget) }}</div>
         </div>
         <div class="slider-container">
@@ -33,12 +33,16 @@
             <span>{{ formatMoney(50000) }}</span>
           </div>
         </div>
-        <div class="budget-remaining" :class="{ 'over-budget': remainingBudget < 0 }">
+        <div
+          class="budget-remaining"
+          :class="{ 'over-budget': remainingBudget < 0 }"
+        >
           <span v-if="remainingBudget >= 0">
-            {{ t('restocking.remaining') }}: {{ formatMoney(remainingBudget) }}
+            {{ t("restocking.remaining") }}: {{ formatMoney(remainingBudget) }}
           </span>
           <span v-else>
-            {{ t('restocking.overBudget') }}: {{ formatMoney(Math.abs(remainingBudget)) }}
+            {{ t("restocking.overBudget") }}:
+            {{ formatMoney(Math.abs(remainingBudget)) }}
           </span>
         </div>
       </div>
@@ -46,15 +50,15 @@
       <!-- Summary stats row -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-label">{{ t('restocking.itemsToRestock') }}</div>
+          <div class="stat-label">{{ t("restocking.itemsToRestock") }}</div>
           <div class="stat-value">{{ recommendations.length }}</div>
         </div>
         <div class="stat-card warning">
-          <div class="stat-label">{{ t('restocking.estimatedTotal') }}</div>
+          <div class="stat-label">{{ t("restocking.estimatedTotal") }}</div>
           <div class="stat-value">{{ formatMoney(totalEstimatedCost) }}</div>
         </div>
         <div class="stat-card success">
-          <div class="stat-label">{{ t('restocking.withinBudget') }}</div>
+          <div class="stat-label">{{ t("restocking.withinBudget") }}</div>
           <div class="stat-value">{{ selectedCount }}</div>
         </div>
       </div>
@@ -62,29 +66,35 @@
       <!-- Recommendations table -->
       <div class="card">
         <div class="card-header">
-          <h3 class="card-title">{{ t('restocking.recommendations') }}</h3>
-          <span class="selected-count">{{ t('restocking.selectedItems') }}: {{ selectedCount }}</span>
+          <h3 class="card-title">{{ t("restocking.recommendations") }}</h3>
+          <span class="selected-count"
+            >{{ t("restocking.selectedItems") }}: {{ selectedCount }}</span
+          >
         </div>
 
         <div v-if="recommendations.length === 0" class="empty-state">
-          <p>{{ t('restocking.noRecommendations') }}</p>
+          <p>{{ t("restocking.noRecommendations") }}</p>
         </div>
         <div v-else class="table-container">
           <table>
             <thead>
               <tr>
-                <th>{{ t('restocking.table.include') }}</th>
-                <th>{{ t('restocking.table.sku') }}</th>
-                <th>{{ t('restocking.table.itemName') }}</th>
-                <th>{{ t('restocking.table.shortage') }}</th>
-                <th>{{ t('restocking.table.trend') }}</th>
-                <th>{{ t('restocking.table.unitCost') }}</th>
-                <th>{{ t('restocking.table.quantity') }}</th>
-                <th>{{ t('restocking.table.estimatedCost') }}</th>
+                <th>{{ t("restocking.table.include") }}</th>
+                <th>{{ t("restocking.table.sku") }}</th>
+                <th>{{ t("restocking.table.itemName") }}</th>
+                <th>{{ t("restocking.table.shortage") }}</th>
+                <th>{{ t("restocking.table.trend") }}</th>
+                <th>{{ t("restocking.table.unitCost") }}</th>
+                <th>{{ t("restocking.table.quantity") }}</th>
+                <th>{{ t("restocking.table.estimatedCost") }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in tableRows" :key="item.item_sku" :class="{ 'row-selected': item.included }">
+              <tr
+                v-for="item in tableRows"
+                :key="item.item_sku"
+                :class="{ 'row-selected': item.included }"
+              >
                 <td>
                   <input
                     type="checkbox"
@@ -93,7 +103,9 @@
                     class="row-checkbox"
                   />
                 </td>
-                <td><strong>{{ item.item_sku }}</strong></td>
+                <td>
+                  <strong>{{ item.item_sku }}</strong>
+                </td>
                 <td>{{ item.item_name }}</td>
                 <td>{{ item.shortage }}</td>
                 <td>
@@ -126,21 +138,33 @@
       <div class="order-summary-bar">
         <div class="summary-info">
           <span class="summary-item">
-            {{ t('restocking.selectedItems') }}: <strong>{{ selectedCount }}</strong>
+            {{ t("restocking.selectedItems") }}:
+            <strong>{{ selectedCount }}</strong>
           </span>
           <span class="summary-item">
-            {{ t('restocking.totalCost') }}: <strong :class="{ 'over-budget-text': remainingBudget < 0 }">{{ formatMoney(totalSelectedCost) }}</strong>
+            {{ t("restocking.totalCost") }}:
+            <strong :class="{ 'over-budget-text': remainingBudget < 0 }">{{
+              formatMoney(totalSelectedCost)
+            }}</strong>
           </span>
           <span class="summary-item">
-            {{ t('restocking.remaining') }}: <strong :class="remainingBudget >= 0 ? 'within-budget-text' : 'over-budget-text'">{{ formatMoney(remainingBudget) }}</strong>
+            {{ t("restocking.remaining") }}:
+            <strong
+              :class="
+                remainingBudget >= 0 ? 'within-budget-text' : 'over-budget-text'
+              "
+              >{{ formatMoney(remainingBudget) }}</strong
+            >
           </span>
         </div>
         <button
           class="place-order-btn"
-          :disabled="selectedCount === 0 || totalSelectedCost > budget || submitting"
+          :disabled="
+            selectedCount === 0 || totalSelectedCost > budget || submitting
+          "
           @click="placeOrder"
         >
-          {{ submitting ? t('common.loading') : t('restocking.placeOrder') }}
+          {{ submitting ? t("common.loading") : t("restocking.placeOrder") }}
         </button>
       </div>
     </div>
@@ -148,190 +172,198 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue'
-import { api } from '../api'
-import { useFilters } from '../composables/useFilters'
-import { useI18n } from '../composables/useI18n'
+import { ref, computed, watch, onMounted } from "vue";
+import { api } from "../api";
+import { useFilters } from "../composables/useFilters";
+import { useI18n } from "../composables/useI18n";
 
 export default {
-  name: 'Restocking',
+  name: "Restocking",
   setup() {
-    const { t, currentCurrency } = useI18n()
-    const { selectedLocation, selectedCategory, getCurrentFilters } = useFilters()
+    const { t, currentCurrency } = useI18n();
+    const { selectedLocation, selectedCategory, getCurrentFilters } =
+      useFilters();
 
-    const loading = ref(true)
-    const error = ref(null)
-    const recommendations = ref([])
-    const budget = ref(10000)
-    const selections = ref({})
-    const submitting = ref(false)
-    const orderSuccess = ref(false)
+    const loading = ref(true);
+    const error = ref(null);
+    const recommendations = ref([]);
+    const budget = ref(10000);
+    const selections = ref({});
+    const submitting = ref(false);
+    const orderSuccess = ref(false);
 
     // Currency formatting helper
     const formatMoney = (value) => {
-      if (value == null || isNaN(value)) return '$0.00'
-      const currency = currentCurrency.value || 'USD'
-      const locale = currency === 'JPY' ? 'ja-JP' : 'en-US'
+      if (value == null || isNaN(value)) return "$0.00";
+      const currency = currentCurrency.value || "USD";
+      const locale = currency === "JPY" ? "ja-JP" : "en-US";
       return value.toLocaleString(locale, {
-        style: 'currency',
-        currency: currency
-      })
-    }
+        style: "currency",
+        currency: currency,
+      });
+    };
 
     // Computed: build table rows from recommendations + selections
     const tableRows = computed(() => {
-      return recommendations.value.map(rec => {
-        const sel = selections.value[rec.item_sku]
-        const included = sel ? sel.included : false
-        const quantity = sel ? sel.quantity : 0
+      return recommendations.value.map((rec) => {
+        const sel = selections.value[rec.item_sku];
+        const included = sel ? sel.included : false;
+        const quantity = sel ? sel.quantity : 0;
         return {
           ...rec,
           included,
           quantity,
-          rowCost: included ? quantity * rec.unit_cost : 0
-        }
-      })
-    })
+          rowCost: included ? quantity * rec.unit_cost : 0,
+        };
+      });
+    });
 
     const selectedItems = computed(() => {
-      return tableRows.value.filter(row => row.included && row.quantity > 0)
-    })
+      return tableRows.value.filter((row) => row.included && row.quantity > 0);
+    });
 
-    const selectedCount = computed(() => selectedItems.value.length)
+    const selectedCount = computed(() => selectedItems.value.length);
 
     const totalSelectedCost = computed(() => {
-      return selectedItems.value.reduce((sum, row) => sum + row.rowCost, 0)
-    })
+      return selectedItems.value.reduce((sum, row) => sum + row.rowCost, 0);
+    });
 
     const remainingBudget = computed(() => {
-      return budget.value - totalSelectedCost.value
-    })
+      return budget.value - totalSelectedCost.value;
+    });
 
     const totalEstimatedCost = computed(() => {
-      return recommendations.value.reduce((sum, rec) => sum + rec.estimated_cost, 0)
-    })
+      return recommendations.value.reduce(
+        (sum, rec) => sum + rec.estimated_cost,
+        0,
+      );
+    });
 
     // Auto-fill logic: greedily select items within budget
     const autoFill = () => {
-      const newSelections = {}
-      let remaining = budget.value
+      const newSelections = {};
+      let remaining = budget.value;
 
       for (const rec of recommendations.value) {
-        const fullCost = rec.recommended_quantity * rec.unit_cost
+        const fullCost = rec.recommended_quantity * rec.unit_cost;
         if (fullCost <= remaining) {
           newSelections[rec.item_sku] = {
             included: true,
-            quantity: rec.recommended_quantity
-          }
-          remaining -= fullCost
+            quantity: rec.recommended_quantity,
+          };
+          remaining -= fullCost;
         } else {
-          const partialQty = Math.floor(remaining / rec.unit_cost)
+          const partialQty = Math.floor(remaining / rec.unit_cost);
           if (partialQty > 0) {
             newSelections[rec.item_sku] = {
               included: true,
-              quantity: partialQty
-            }
-            remaining -= partialQty * rec.unit_cost
+              quantity: partialQty,
+            };
+            remaining -= partialQty * rec.unit_cost;
           } else {
             newSelections[rec.item_sku] = {
               included: false,
-              quantity: rec.recommended_quantity
-            }
+              quantity: rec.recommended_quantity,
+            };
           }
         }
       }
 
-      selections.value = newSelections
-    }
+      selections.value = newSelections;
+    };
 
     // Toggle include/exclude for a row
     const toggleItem = (sku) => {
-      const sel = selections.value[sku]
+      const sel = selections.value[sku];
       if (sel) {
         selections.value = {
           ...selections.value,
-          [sku]: { ...sel, included: !sel.included }
-        }
+          [sku]: { ...sel, included: !sel.included },
+        };
       }
-    }
+    };
 
     // Update quantity for a row
     const updateQuantity = (sku, event) => {
-      const val = parseInt(event.target.value, 10)
-      const sel = selections.value[sku]
+      const val = parseInt(event.target.value, 10);
+      const sel = selections.value[sku];
       if (sel) {
-        const rec = recommendations.value.find(r => r.item_sku === sku)
-        const maxQty = rec ? rec.shortage : Infinity
-        const quantity = isNaN(val) ? 0 : Math.max(0, Math.min(val, maxQty))
+        const rec = recommendations.value.find((r) => r.item_sku === sku);
+        const maxQty = rec ? rec.shortage : Infinity;
+        const quantity = isNaN(val) ? 0 : Math.max(0, Math.min(val, maxQty));
         selections.value = {
           ...selections.value,
-          [sku]: { ...sel, quantity }
-        }
+          [sku]: { ...sel, quantity },
+        };
       }
-    }
+    };
 
     // Load recommendations from API
     const loadRecommendations = async () => {
       try {
-        loading.value = true
-        error.value = null
-        const filters = getCurrentFilters()
+        loading.value = true;
+        error.value = null;
+        const filters = getCurrentFilters();
         const data = await api.getRestockingRecommendations({
           warehouse: filters.warehouse,
-          category: filters.category
-        })
-        recommendations.value = data
-        autoFill()
+          category: filters.category,
+        });
+        recommendations.value = data;
+        autoFill();
       } catch (err) {
-        error.value = 'Failed to load restocking recommendations: ' + err.message
+        error.value =
+          "Failed to load restocking recommendations: " + err.message;
       } finally {
-        loading.value = false
+        loading.value = false;
       }
-    }
+    };
 
     // Place order
     const placeOrder = async () => {
-      if (selectedCount.value === 0 || totalSelectedCost.value > budget.value) return
+      if (selectedCount.value === 0 || totalSelectedCost.value > budget.value)
+        return;
 
-      submitting.value = true
+      submitting.value = true;
       try {
-        const items = selectedItems.value.map(row => ({
+        const items = selectedItems.value.map((row) => ({
           sku: row.item_sku,
           name: row.item_name,
           quantity: row.quantity,
           unit_cost: row.unit_cost,
           warehouse: row.warehouse,
-          category: row.category
-        }))
+          category: row.category,
+        }));
 
         await api.submitRestockingOrder({
           items,
-          budget: budget.value
-        })
+          budget: budget.value,
+        });
 
-        orderSuccess.value = true
-        setTimeout(() => { orderSuccess.value = false }, 3000)
+        orderSuccess.value = true;
+        setTimeout(() => {
+          orderSuccess.value = false;
+        }, 3000);
 
         // Reload recommendations after order
-        await loadRecommendations()
+        await loadRecommendations();
       } catch (err) {
-        error.value = 'Failed to place order: ' + err.message
+        error.value = "Failed to place order: " + err.message;
       } finally {
-        submitting.value = false
+        submitting.value = false;
       }
-    }
+    };
 
     // Watch budget changes to re-run auto-fill
     watch(budget, () => {
-      autoFill()
-    })
+      autoFill();
+    });
 
     // Watch filter changes to reload data
     watch([selectedLocation, selectedCategory], () => {
-      loadRecommendations()
-    })
+      loadRecommendations();
+    });
 
-    onMounted(loadRecommendations)
+    onMounted(loadRecommendations);
 
     return {
       t,
@@ -349,10 +381,10 @@ export default {
       formatMoney,
       toggleItem,
       updateQuantity,
-      placeOrder
-    }
-  }
-}
+      placeOrder,
+    };
+  },
+};
 </script>
 
 <style scoped>
